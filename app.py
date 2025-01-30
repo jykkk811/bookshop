@@ -7,8 +7,20 @@ app = Flask(__name__)
 
 # 📌 Google Sheets API 설정
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials = ServiceAccountCredentials.from_json_keyfile_name("bookshop-449223-3a8e5a6c6cc1.json", scope)
+import os
+from dotenv import load_dotenv
+from google.oauth2.service_account import Credentials
+
+# .env 파일 로드
+load_dotenv()
+
+# 환경 변수에서 JSON 키 경로 불러오기
+json_keyfile_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+
+# Google Sheets API 설정
+credentials = Credentials.from_service_account_file(json_keyfile_path)
 client = gspread.authorize(credentials)
+
 
 # 📌 Google Sheets에서 데이터 가져오기
 try:
