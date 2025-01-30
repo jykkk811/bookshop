@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>책 판매 키오스크</title>
+    <style>
+        .book-button {
+            width: 250px;  /* 📌 가로 크기 고정 */
+            height: 120px; /* 📌 세로 크기 기존보다 3배 확장 */
+            font-size: 18px;
+            margin: 10px;
+            padding: 10px;
+            border-radius: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .book-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    <script>
+        // 판매원 이름 저장
+        function saveSalesperson() {
+            let salesperson = document.getElementById("salesperson").value;
+            if (!salesperson) {
+                alert("⚠️ 판매원 이름을 입력해주세요!");
+                return;
+            }
+            localStorage.setItem("salesperson", salesperson); // ✅ 브라우저에 판매원 이름 저장
+            document.getElementById("savedSalesperson").innerText = "판매원: " + salesperson;
+        }
+
+        // 저장된 판매원 이름 불러오기
+        window.onload = function() {
+            let savedName = localStorage.getItem("salesperson");
+            if (savedName) {
+                document.getElementById("savedSalesperson").innerText = "판매원: " + savedName;
+            }
+        };
+
+        // 장바구니에 책 추가
+        function addToCart(title, price, payment) {
+            let salesperson = localStorage.getItem("salesperson");
+            if (!salesperson) {
+                alert("⚠️ 판매원 이름을 입력해주세요!");
+                return;
+            }
+
+            fetch("/add_to_cart", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, price, payment, salesperson })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>📖 책 판매 키오스크</h1>
+    <a href="/settings">⚙️ 설정 페이지 이동</a>
+
+    <h2>📌 판매원 정보</h2>
+    <input type="text" id="salesperson" placeholder="판매원 이름 입력">
+    <button onclick="saveSalesperson()">✅ 저장</button>
+    <p id="savedSalesperson">판매원: 없음</p>
+
+    <h2>📌 판매 가능한 책 목록</h2>
+    {% if book_data %}
+        <div>
+            {% for book in book_data %}
+                <button class="book-button" onclick="addToCart('{{ book['책 제목'] }}', '{{ book['가격'] }}', '{{ book['결제 방법'] }}')">
+                    {{ book["책 제목"] }}<br>
+                    💰 {{ book["가격"] }}원<br>
+                    🏷 할인: {{ book["할인 금액"] }}원<br>
+                    💳 결제: {{ book["결제 방법"] }}
+                </button>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>📌 등록된 책이 없습니다.</p>
+    {% endif %}
+</body>
+</html>

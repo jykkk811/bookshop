@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>책 설정 페이지</title>
+    <script>
+        function addBook() {
+            let title = document.getElementById("title").value;
+            let price = document.getElementById("price").value;
+            let payment = document.getElementById("payment").value;
+            let discount = document.getElementById("discount").value;
+            let discount_code = document.getElementById("discount_code").value;
+
+            if (!title || !price || !payment || !discount) {
+                alert("⚠️ 모든 필드를 입력해야 합니다!");
+                return;
+            }
+
+            fetch("/add_book", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, price, payment, discount, discount_code })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                location.reload(); // ✅ 새 책 추가 후 새로고침하여 목록 업데이트
+            });
+        }
+
+        function deleteBook(title) {
+            if (!confirm(`'${title}' 책을 삭제하시겠습니까?`)) return;
+            
+            fetch("/delete_book", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                location.reload(); // ✅ 삭제 후 목록 업데이트
+            });
+        }
+
+        function updateBook(original_title, original_price, original_payment, original_discount, original_code) {
+            let title = prompt("새 책 제목:", original_title);
+            let price = prompt("새 가격:", original_price);
+            let payment = prompt("새 결제 방법 (현금/계좌이체만 가능):", original_payment);
+            let discount = prompt("새 할인 금액:", original_discount);
+            let discount_code = prompt("새 할인 코드:", original_code);
+
+            if (!title || !price || !payment || !discount) {
+                alert("⚠️ 모든 필드를 입력해야 합니다!");
+                return;
+            }
+
+            if (payment !== "현금" && payment !== "계좌이체") {
+                alert("⚠️ 결제 방법은 '현금' 또는 '계좌이체'만 가능합니다.");
+                return;
+            }
+
+            fetch("/update_book", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ original_title, title, price, payment, discount, discount_code })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                location.reload(); // ✅ 수정 후 새로고침하여 목록 업데이트
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>⚙️ 책 설정 페이지</h1>
+    <a href="/">🏠 메인 화면 이동</a>
+
+    <h2>📌 현재 등록된 책 목록</h2>
+    {% if book_data %}
+        <ul>
+            {% for book in book_data %}
+                <li>
+                    {{ book["책 제목"] }} - {{ book["가격"] }}원 (결제: {{ book["결제 방법"] }}, 할인: {{ book["할인 금액"] }}원)
+                    <button onclick="updateBook(
+                        '{{ book['책 제목'] }}', 
+                        '{{ book['가격'] }}', 
+                        '{{ book['결제 방법'] }}', 
+                        '{{ book['할인 금액'] }}', 
+                        '{{ book.get('할인 코드', '') }}')">✏ 수정</button>
+                    <button onclick="deleteBook('{{ book['책 제목'] }}')">🗑 삭제</button>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>📌 등록된 책이 없습니다.</p>
+    {% endif %}
+
+    <h2>➕ 새 책 추가</h2>
+    <input type="text" id="title" placeholder="책 제목">
+    <input type="number" id="price" placeholder="가격">
+    <select id="payment">
+        <option value="현금">현금</option>
+        <option value="계좌이체">계좌이체</option>
+    </select>
+    <input type="number" id="discount" placeholder="할인 금액">
+    <input type="text" id="discount_code" placeholder="할인 코드">
+    <button onclick="addBook()">📥 추가</button>
+</body>
+</html>
