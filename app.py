@@ -1,4 +1,6 @@
 import os
+import base64
+import json
 from dotenv import load_dotenv
 from google.oauth2.service_account import Credentials
 import gspread
@@ -10,13 +12,17 @@ app = Flask(__name__)
 # 📌 .env 파일 로드 (로컬 실행 시 필요)
 load_dotenv()
 
-# 📌 Google Sheets API 설정 (환경 변수에서 경로 가져오기)
-json_keyfile_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+# 📌 Base64 환경 변수에서 서비스 계정 JSON 키 로드
+json_base64 = os.getenv("GOOGLE_CREDENTIALS_BASE64")
 
-if json_keyfile_path is None:
-    raise FileNotFoundError("❌ GOOGLE_APPLICATION_CREDENTIALS 환경 변수가 설정되지 않았습니다!")
+if not json_base64:
+    raise ValueError("❌ GOOGLE_CREDENTIALS_BASE64 환경 변수가 설정되지 않았습니다!")
 
-credentials = Credentials.from_service_account_file(json_keyfile_path)
+# Base64 디코딩하여 JSON 로드
+json_keyfile_dict = json.loads(base64.b64decode(json_base64))
+
+# Google Sheets API 인증
+credentials = Credentials.from_service_account_info(json_keyfile_dict)
 client = gspread.authorize(credentials)
 
 # 📌 Google Sheets 데이터 가져오기
@@ -26,7 +32,7 @@ try:
 except gspread.exceptions.SpreadsheetNotFound:
     print("❌ Google Sheets 파일을 찾을 수 없습니다. 파일 이름을 확인하세요.")
 
-# 나머지 코드 유지
+# 나머지 API 코드 유지...
 
 
 # 📌 5️⃣ 책 목록 헤더 자동 추가
